@@ -51,6 +51,16 @@
 
 */
 
+/*
+RENAMED SYMBOLS:
+SimplePing => MMSimplePing
+SimplePingDelegate => MMSimplePingDelegate
+ICMPHeader => MMICMPHeader
+IPHeader => MMIPHeader
+kICMPTypeEchoReply => kMMICMPTypeEchoReply
+kICMPTypeEchoRequest => kMMICMPTypeEchoRequest
+*/
+
 #import <Foundation/Foundation.h>
 
 #if TARGET_OS_EMBEDDED || TARGET_IPHONE_SIMULATOR
@@ -65,14 +75,14 @@
 
 // The SimplePing class is a very simple class that lets you send and receive pings.
 
-@protocol SimplePingDelegate;
+@protocol MMSimplePingDelegate;
 
-@interface SimplePing : NSObject
+@interface MMSimplePing : NSObject
 
-+ (SimplePing *)simplePingWithHostName:(NSString *)hostName;        // chooses first IPv4 address
-+ (SimplePing *)simplePingWithHostAddress:(NSData *)hostAddress;    // contains (struct sockaddr)
++ (MMSimplePing *)simplePingWithHostName:(NSString *)hostName;        // chooses first IPv4 address
++ (MMSimplePing *)simplePingWithHostAddress:(NSData *)hostAddress;    // contains (struct sockaddr)
 
-@property (nonatomic, weak,   readwrite) id<SimplePingDelegate> delegate;
+@property (nonatomic, weak,   readwrite) id<MMSimplePingDelegate> delegate;
 
 @property (nonatomic, copy,   readonly ) NSString *             hostName;
 @property (nonatomic, copy,   readonly ) NSData *               hostAddress;
@@ -95,22 +105,22 @@
     // Stops the pinger object.  You should call this when you're done 
     // pinging.
 
-+ (const struct ICMPHeader *)icmpInPacket:(NSData *)packet;
++ (const struct MMICMPHeader *)icmpInPacket:(NSData *)packet;
     // Given a valid IP packet contains an ICMP , returns the address of the ICMP header that 
     // follows the IP header.  This doesn't do any significant validation of the packet.
 
 @end
 
-@protocol SimplePingDelegate <NSObject>
+@protocol MMSimplePingDelegate <NSObject>
 
 @optional
 
-- (void)simplePing:(SimplePing *)pinger didStartWithAddress:(NSData *)address;
-- (void)simplePing:(SimplePing *)pinger didFailWithError:(NSError *)error;
-- (void)simplePing:(SimplePing *)pinger didSendPacket:(NSData *)packet;
-- (void)simplePing:(SimplePing *)pinger didFailToSendPacket:(NSData *)packet error:(NSError *)error;
-- (void)simplePing:(SimplePing *)pinger didReceivePingResponsePacket:(NSData *)packet;
- - (void)simplePing:(SimplePing *)pinger didReceiveUnexpectedPacket:(NSData *)packet;
+- (void)simplePing:(MMSimplePing *)pinger didStartWithAddress:(NSData *)address;
+- (void)simplePing:(MMSimplePing *)pinger didFailWithError:(NSError *)error;
+- (void)simplePing:(MMSimplePing *)pinger didSendPacket:(NSData *)packet;
+- (void)simplePing:(MMSimplePing *)pinger didFailToSendPacket:(NSData *)packet error:(NSError *)error;
+- (void)simplePing:(MMSimplePing *)pinger didReceivePingResponsePacket:(NSData *)packet;
+ - (void)simplePing:(MMSimplePing *)pinger didReceiveUnexpectedPacket:(NSData *)packet;
     // Called whenever the SimplePing object receives an ICMP packet that does not 
     // look like a response to one of our pings.
 
@@ -122,7 +132,7 @@
 
 // IP header structure:
 
-struct IPHeader {
+struct MMIPHeader {
     uint8_t     versionAndHeaderLength;
     uint8_t     differentiatedServices;
     uint16_t    totalLength;
@@ -136,30 +146,30 @@ struct IPHeader {
     // options...
     // data...
 };
-typedef struct IPHeader IPHeader;
+typedef struct MMIPHeader MMIPHeader;
 
-check_compile_time(sizeof(IPHeader) == 20);
-check_compile_time(offsetof(IPHeader, versionAndHeaderLength) == 0);
-check_compile_time(offsetof(IPHeader, differentiatedServices) == 1);
-check_compile_time(offsetof(IPHeader, totalLength) == 2);
-check_compile_time(offsetof(IPHeader, identification) == 4);
-check_compile_time(offsetof(IPHeader, flagsAndFragmentOffset) == 6);
-check_compile_time(offsetof(IPHeader, timeToLive) == 8);
-check_compile_time(offsetof(IPHeader, protocol) == 9);
-check_compile_time(offsetof(IPHeader, headerChecksum) == 10);
-check_compile_time(offsetof(IPHeader, sourceAddress) == 12);
-check_compile_time(offsetof(IPHeader, destinationAddress) == 16);
+__Check_Compile_Time(sizeof(MMIPHeader) == 20);
+__Check_Compile_Time(offsetof(MMIPHeader, versionAndHeaderLength) == 0);
+__Check_Compile_Time(offsetof(MMIPHeader, differentiatedServices) == 1);
+__Check_Compile_Time(offsetof(MMIPHeader, totalLength) == 2);
+__Check_Compile_Time(offsetof(MMIPHeader, identification) == 4);
+__Check_Compile_Time(offsetof(MMIPHeader, flagsAndFragmentOffset) == 6);
+__Check_Compile_Time(offsetof(MMIPHeader, timeToLive) == 8);
+__Check_Compile_Time(offsetof(MMIPHeader, protocol) == 9);
+__Check_Compile_Time(offsetof(MMIPHeader, headerChecksum) == 10);
+__Check_Compile_Time(offsetof(MMIPHeader, sourceAddress) == 12);
+__Check_Compile_Time(offsetof(MMIPHeader, destinationAddress) == 16);
 
 // ICMP type and code combinations:
 
 enum {
-    kICMPTypeEchoReply   = 0,           // code is always 0
-    kICMPTypeEchoRequest = 8            // code is always 0
+    kMMICMPTypeEchoReply   = 0,           // code is always 0
+    kMMICMPTypeEchoRequest = 8            // code is always 0
 };
 
 // ICMP header structure:
 
-struct ICMPHeader {
+struct MMICMPHeader {
     uint8_t     type;
     uint8_t     code;
     uint16_t    checksum;
@@ -167,11 +177,11 @@ struct ICMPHeader {
     uint16_t    sequenceNumber;
     // data...
 };
-typedef struct ICMPHeader ICMPHeader;
+typedef struct MMICMPHeader MMICMPHeader;
 
-check_compile_time(sizeof(ICMPHeader) == 8);
-check_compile_time(offsetof(ICMPHeader, type) == 0);
-check_compile_time(offsetof(ICMPHeader, code) == 1);
-check_compile_time(offsetof(ICMPHeader, checksum) == 2);
-check_compile_time(offsetof(ICMPHeader, identifier) == 4);
-check_compile_time(offsetof(ICMPHeader, sequenceNumber) == 6);
+__Check_Compile_Time(sizeof(MMICMPHeader) == 8);
+__Check_Compile_Time(offsetof(MMICMPHeader, type) == 0);
+__Check_Compile_Time(offsetof(MMICMPHeader, code) == 1);
+__Check_Compile_Time(offsetof(MMICMPHeader, checksum) == 2);
+__Check_Compile_Time(offsetof(MMICMPHeader, identifier) == 4);
+__Check_Compile_Time(offsetof(MMICMPHeader, sequenceNumber) == 6);

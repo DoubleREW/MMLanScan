@@ -13,6 +13,10 @@
 #import <arpa/inet.h>
 #include <netdb.h>
 
+#if !TARGET_OS_IPHONE && !TARGET_OS_SIMULATOR && !TARGET_OS_EMBEDDED
+#import <CoreWLAN/CoreWLAN.h>
+#endif
+
 @implementation LANProperties
 
 #pragma mark - Public methods
@@ -34,7 +38,6 @@
         temp_addr = interfaces;
         
         while(temp_addr != NULL) {
-            
             // check if interface is en0 which is the wifi connection on the iPhone
             if(temp_addr->ifa_addr->sa_family == AF_INET) {
                 
@@ -42,7 +45,10 @@
                     
                     localDevice.ipAddress = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_addr)->sin_addr)];
                     localDevice.subnetMask = [NSString stringWithUTF8String:inet_ntoa(((struct sockaddr_in *)temp_addr->ifa_netmask)->sin_addr)];
-                    localDevice.hostname = [self getHostFromIPAddress:localDevice.ipAddress];
+                    
+                    char hn[128];
+                    gethostname(hn, 128);
+                    localDevice.hostname = [NSString stringWithFormat:@"%s", hn];
                 }
             }
             
@@ -64,7 +70,7 @@
 }
 
 +(NSString*)fetchSSIDInfo {
-    
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_EMBEDDED
     NSArray *ifs = (__bridge_transfer NSArray *)CNCopySupportedInterfaces();
 
     NSDictionary *info;
@@ -81,6 +87,9 @@
     }
     
     return @"No WiFi Available";
+#else
+    return [[[CWWiFiClient sharedWiFiClient] interface] ssid];
+#endif
 }
 //Getting all the hosts to ping and returns them as array
 +(NSArray*)getAllHostsForIP:(NSString*)ipAddress andSubnet:(NSString*)subnetMask {

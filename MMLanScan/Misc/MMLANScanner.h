@@ -87,6 +87,10 @@ MMLanScannerStatus;
 @property(nonatomic,assign,readonly)BOOL isScanning;
 
 /*!
+ @brief Starts the scanning indicating the local interface
+ */
+- (void)startWithLocalDevice:(MMDevice *)localDevice;
+/*!
  @brief Starts the scanning
  */
 - (void)start;

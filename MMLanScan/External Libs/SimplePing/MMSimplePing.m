@@ -51,7 +51,7 @@
 
 */
 
-#import "SimplePing.h"
+#import "MMSimplePing.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -103,7 +103,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 
 #pragma mark * SimplePing
 
-@interface SimplePing ()
+@interface MMSimplePing ()
 
 @property (nonatomic, copy,   readwrite) NSData *           hostAddress;
 @property (nonatomic, assign, readwrite) uint16_t           nextSequenceNumber;
@@ -113,7 +113,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 
 @end
 
-@implementation SimplePing
+@implementation MMSimplePing
 {
     CFHostRef               _host;
     CFSocketRef             _socket;
@@ -147,16 +147,16 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
     assert(self->_socket == NULL);
 }
 
-+ (SimplePing *)simplePingWithHostName:(NSString *)hostName
++ (MMSimplePing *)simplePingWithHostName:(NSString *)hostName
     // See comment in header.
 {
-    return [[SimplePing alloc] initWithHostName:hostName address:nil];
+    return [[MMSimplePing alloc] initWithHostName:hostName address:nil];
 }
 
-+ (SimplePing *)simplePingWithHostAddress:(NSData *)hostAddress
++ (MMSimplePing *)simplePingWithHostAddress:(NSData *)hostAddress
     // See comment in header.
 {
-    return [[SimplePing alloc] initWithHostName:NULL address:hostAddress];
+    return [[MMSimplePing alloc] initWithHostName:NULL address:hostAddress];
 }
 
 - (void)noop
@@ -210,7 +210,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
     int             err;
     NSData *        payload;
     NSMutableData * packet;
-    ICMPHeader *    icmpPtr;
+    MMICMPHeader *    icmpPtr;
     ssize_t         bytesSent;
     
     // Construct the ping packet.
@@ -227,7 +227,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
     assert(packet != nil);
 
     icmpPtr = [packet mutableBytes];
-    icmpPtr->type = kICMPTypeEchoRequest;
+    icmpPtr->type = kMMICMPTypeEchoRequest;
     icmpPtr->code = 0;
     icmpPtr->checksum = 0;
     icmpPtr->identifier     = OSSwapHostToBigInt16(self.identifier);
@@ -293,35 +293,35 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 }
 
 + (NSUInteger)icmpHeaderOffsetInPacket:(NSData *)packet
-    // Returns the offset of the ICMPHeader within an IP packet.
+    // Returns the offset of the MMICMPHeader within an IP packet.
 {
     NSUInteger              result;
-    const struct IPHeader * ipPtr;
+    const struct MMIPHeader * ipPtr;
     size_t                  ipHeaderLength;
     
     result = NSNotFound;
-    if ([packet length] >= (sizeof(IPHeader) + sizeof(ICMPHeader))) {
-        ipPtr = (const IPHeader *) [packet bytes];
+    if ([packet length] >= (sizeof(MMIPHeader) + sizeof(MMICMPHeader))) {
+        ipPtr = (const MMIPHeader *) [packet bytes];
         assert((ipPtr->versionAndHeaderLength & 0xF0) == 0x40);     // IPv4
         assert(ipPtr->protocol == 1);                               // ICMP
         ipHeaderLength = (ipPtr->versionAndHeaderLength & 0x0F) * sizeof(uint32_t);
-        if ([packet length] >= (ipHeaderLength + sizeof(ICMPHeader))) {
+        if ([packet length] >= (ipHeaderLength + sizeof(MMICMPHeader))) {
             result = ipHeaderLength;
         }
     }
     return result;
 }
 
-+ (const struct ICMPHeader *)icmpInPacket:(NSData *)packet
++ (const struct MMICMPHeader *)icmpInPacket:(NSData *)packet
     // See comment in header.
 {
-    const struct ICMPHeader *   result;
+    const struct MMICMPHeader *   result;
     NSUInteger                  icmpHeaderOffset;
     
     result = nil;
     icmpHeaderOffset = [self icmpHeaderOffsetInPacket:packet];
     if (icmpHeaderOffset != NSNotFound) {
-        result = (const struct ICMPHeader *) (((const uint8_t *)[packet bytes]) + icmpHeaderOffset);
+        result = (const struct MMICMPHeader *) (((const uint8_t *)[packet bytes]) + icmpHeaderOffset);
     }
     return result;
 }
@@ -332,7 +332,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
 {
     BOOL                result;
     NSUInteger          icmpHeaderOffset;
-    ICMPHeader *        icmpPtr;
+    MMICMPHeader *        icmpPtr;
     uint16_t            receivedChecksum;
     uint16_t            calculatedChecksum;
     
@@ -340,7 +340,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
     
     icmpHeaderOffset = [[self class] icmpHeaderOffsetInPacket:packet];
     if (icmpHeaderOffset != NSNotFound) {
-        icmpPtr = (struct ICMPHeader *) (((uint8_t *)[packet mutableBytes]) + icmpHeaderOffset);
+        icmpPtr = (struct MMICMPHeader *) (((uint8_t *)[packet mutableBytes]) + icmpHeaderOffset);
 
         receivedChecksum   = icmpPtr->checksum;
         icmpPtr->checksum  = 0;
@@ -348,7 +348,7 @@ static uint16_t in_cksum(const void *buffer, size_t bufferLen)
         icmpPtr->checksum  = receivedChecksum;
         
         if (receivedChecksum == calculatedChecksum) {
-            if ( (icmpPtr->type == kICMPTypeEchoReply) && (icmpPtr->code == 0) ) {
+            if ( (icmpPtr->type == kMMICMPTypeEchoReply) && (icmpPtr->code == 0) ) {
                 if ( OSSwapBigToHostInt16(icmpPtr->identifier) == self.identifier ) {
                     if ( OSSwapBigToHostInt16(icmpPtr->sequenceNumber) < self.nextSequenceNumber ) {
                         result = YES;
@@ -426,10 +426,10 @@ static void SocketReadCallback(CFSocketRef s, CFSocketCallBackType type, CFDataR
     // This C routine is called by CFSocket when there's data waiting on our 
     // ICMP socket.  It just redirects the call to Objective-C code.
 {
-    SimplePing *    obj;
+    MMSimplePing *    obj;
     
-    obj = (__bridge SimplePing *) info;
-    assert([obj isKindOfClass:[SimplePing class]]);
+    obj = (__bridge MMSimplePing *) info;
+    assert([obj isKindOfClass:[MMSimplePing class]]);
     
     #pragma unused(s)
     assert(s == obj->_socket);
@@ -545,12 +545,12 @@ static void HostResolveCallback(CFHostRef theHost, CFHostInfoType typeInfo, cons
     // This C routine is called by CFHost when the host resolution is complete. 
     // It just redirects the call to the appropriate Objective-C method.
 {
-    SimplePing *    obj;
+    MMSimplePing *    obj;
 
  //   NSLog(@">HostResolveCallback");
     
-    obj = (__bridge SimplePing *) info;
-    assert([obj isKindOfClass:[SimplePing class]]);
+    obj = (__bridge MMSimplePing *) info;
+    assert([obj isKindOfClass:[MMSimplePing class]]);
     
     #pragma unused(theHost)
     assert(theHost == obj->_host);

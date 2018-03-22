@@ -10,7 +10,11 @@
 
 #if TARGET_IPHONE_SIMULATOR
 #include <net/route.h>
-#else
+#endif
+#if TARGET_OS_MAC
+#include <net/route.h>
+#endif
+#if TARGET_OS_IOS
 #include "route.h"
 #endif
 

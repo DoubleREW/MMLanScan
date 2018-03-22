@@ -55,7 +55,7 @@
 }
 
 #pragma mark - Start/Stop ping
--(void)start {
+-(void)startWithLocalDevice:(MMDevice *)localDevice {
     
     //In case the developer call start when is already running
     if (self.queue.operationCount!=0) {
@@ -67,7 +67,7 @@
     self.isScanning = YES;
 
     //Getting the local IP
-    self.device = [LANProperties localIPAddress];
+    self.device = localDevice;
     
     //If IP is null then return
     if (!self.device) {
@@ -75,9 +75,11 @@
         return;
     }
     
+#if TARGET_OS_IPHONE || TARGET_OS_SIMULATOR || TARGET_OS_EMBEDDED
     if ([self.delegate respondsToSelector:@selector(lanScanDidFindNewDevice:)]) {
         [self.delegate lanScanDidFindNewDevice:self.device];
     }
+#endif
     
     //Getting the available IPs to ping based on our network subnet.
     self.ipsToPing = [LANProperties getAllHostsForIP:self.device.ipAddress andSubnet:self.device.subnetMask];
@@ -136,6 +138,10 @@
         
     }
 
+}
+
+-(void)start {
+    return [self startWithLocalDevice:[LANProperties localIPAddress]];
 }
 
 -(void)stop {

@@ -16,7 +16,7 @@ static const float PING_TIMEOUT = 1;
 @interface PingOperation ()
 @property (nonatomic,strong) NSString *ipStr;
 @property (nonatomic,strong) NSDictionary *brandDictionary;
-@property(nonatomic,strong)SimplePing *simplePing;
+@property(nonatomic,strong) MMSimplePing *simplePing;
 @property (nonatomic, copy) void (^result)(NSError  * _Nullable error, NSString  * _Nonnull ip);
 @end
 
@@ -38,7 +38,7 @@ static const float PING_TIMEOUT = 1;
     if (self) {
         self.name = ip;
         _ipStr= ip;
-        _simplePing = [SimplePing simplePingWithHostName:ip];
+        _simplePing = [MMSimplePing simplePingWithHostName:ip];
         _simplePing.delegate = self;
         _result = result;
         _isExecuting = NO;
@@ -129,7 +129,7 @@ static const float PING_TIMEOUT = 1;
 #pragma mark - Pinger delegate
 
 // When the pinger starts, send the ping immediately
-- (void)simplePing:(SimplePing *)pinger didStartWithAddress:(NSData *)address {
+- (void)simplePing:(MMSimplePing *)pinger didStartWithAddress:(NSData *)address {
     
     if (self.isCancelled) {
         [self finish];
@@ -139,27 +139,27 @@ static const float PING_TIMEOUT = 1;
     [pinger sendPingWithData:nil];
 }
 
-- (void)simplePing:(SimplePing *)pinger didFailWithError:(NSError *)error {
+- (void)simplePing:(MMSimplePing *)pinger didFailWithError:(NSError *)error {
   
     [pingTimer invalidate];
     errorMessage = error;
     [self finishedPing];
 }
 
-- (void)simplePing:(SimplePing *)pinger didFailToSendPacket:(NSData *)packet error:(NSError *)error {
+- (void)simplePing:(MMSimplePing *)pinger didFailToSendPacket:(NSData *)packet error:(NSError *)error {
     
     [pingTimer invalidate];
     errorMessage = error;
     [self finishedPing];
 }
 
-- (void)simplePing:(SimplePing *)pinger didReceivePingResponsePacket:(NSData *)packet {
+- (void)simplePing:(MMSimplePing *)pinger didReceivePingResponsePacket:(NSData *)packet {
    
     [pingTimer invalidate];
     [self finishedPing];
 }
 
-- (void)simplePing:(SimplePing *)pinger didSendPacket:(NSData *)packet {
+- (void)simplePing:(MMSimplePing *)pinger didSendPacket:(NSData *)packet {
     //This timer will fired pingTimeOut in case the SimplePing don't answer in the specific time
     pingTimer = [NSTimer scheduledTimerWithTimeInterval:PING_TIMEOUT target:self selector:@selector(pingTimeOut:) userInfo:nil repeats:NO];
 }

@@ -160,7 +160,7 @@
 +(NSString *)print01:(int)int11{
     
     int n =128;
-    char array12[8];
+    char array12[9];
     NSString *str;
     
     if(int11==0)
@@ -177,6 +177,7 @@
         
         n=n/2;
     }
+    array12[8] = '\0';
     
     str= [[NSString stringWithFormat:@"%s",array12] substringWithRange:NSMakeRange(0,8)];
     

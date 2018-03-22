@@ -5,9 +5,9 @@
 //  Copyright © 2016 Miksoft. All rights reserved.
 //
 
-#import "SimplePing.h"
+#import "MMSimplePing.h"
 
-@interface PingOperation : NSOperation <SimplePingDelegate> {
+@interface PingOperation : NSOperation <MMSimplePingDelegate> {
     BOOL _isFinished;
     BOOL _isExecuting;
 }
