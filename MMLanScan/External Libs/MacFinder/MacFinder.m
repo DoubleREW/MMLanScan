@@ -54,7 +54,7 @@
         // savedata("test",buf2,n);
         NSString *macAddress =[NSString stringWithFormat:@"%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",buf2[index+0], buf2[index+1], buf2[index+2], buf2[index+3], buf2[index+4], buf2[index+5]];
         //If macAddress is equal to 00:00.. then mac address not exist in ARP table and returns nil. If it retuns 08:00.. then the mac address not exist because it's not in the same subnet with the device and return nil
-        if ([macAddress isEqualToString:@"00:00:00:00:00:00"] ||[macAddress isEqualToString:@"08:00:00:00:00:00"] ) {
+        if ([macAddress isEqualToString:@"00:00:00:00:00:00"] ||[macAddress isEqualToString:@"08:00:00:00:00:00"] ||[macAddress isEqualToString:@"05:00:00:00:00:00"] ) {
             return nil;
         }
         return macAddress;

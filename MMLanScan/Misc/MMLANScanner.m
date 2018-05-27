@@ -11,10 +11,11 @@
 #import "MACOperation.h"
 #import "MacFinder.h"
 #import "MMDevice.h"
+#import "RRIPGenerator.h"
 
 @interface MMLANScanner ()
 @property (nonatomic,strong) MMDevice *device;
-@property (nonatomic,strong) NSArray *ipsToPing;
+@property (nonatomic,strong) RRIPGenerator *ipGenerator;
 @property (nonatomic,assign) float currentHost;
 @property (nonatomic,strong) NSDictionary *brandDictionary;
 @property (nonatomic,strong) NSOperationQueue *queue;
@@ -82,16 +83,24 @@
 #endif
     
     //Getting the available IPs to ping based on our network subnet.
-    self.ipsToPing = [LANProperties getAllHostsForIP:self.device.ipAddress andSubnet:self.device.subnetMask];
-
+    self.ipGenerator = [[RRIPGenerator alloc] initWithIP:self.device.ipAddress subnetMask:self.device.subnetMask];
+    
     //The counter of how much pings have been made
     self.currentHost=0;
+    
+    // Start
+    [self startPingingNextBunch];
+}
 
+- (void)startPingingNextBunch
+{
+    NSArray *ipsToPing = [self.ipGenerator nextBunch];
+    
     //Making a weak reference to self in order to use it from the completionBlocks in operation.
     MMLANScanner * __weak weakSelf = self;
     
     //Looping through IPs array and adding the operations to the queue
-    for (NSString *ipStr in self.ipsToPing) {
+    for (NSString *ipStr in ipsToPing) {
         
         //The ping operation
         PingOperation *pingOperation = [[PingOperation alloc]initWithIPToPing:ipStr andCompletionHandler:^(NSError  * _Nullable error, NSString  * _Nonnull ip) {
@@ -112,7 +121,7 @@
             
             //Since the second half of the operation is completed we will update our proggress by 0.5
             weakSelf.currentHost = weakSelf.currentHost + 0.5;
-
+            
             if (!error) {
                 //Letting know the delegate that found a new device (on Main Thread)
                 dispatch_async (dispatch_get_main_queue(), ^{
@@ -124,12 +133,14 @@
             
             //Letting now the delegate the process  (on Main Thread)
             dispatch_async (dispatch_get_main_queue(), ^{
+                [weakSelf hostPingCompleted];
+                
                 if ([weakSelf.delegate respondsToSelector:@selector(lanScanProgressPinged:from:)]) {
-                    [weakSelf.delegate lanScanProgressPinged:self.currentHost from:[self.ipsToPing count]];
+                    [weakSelf.delegate lanScanProgressPinged:self.currentHost from:[weakSelf.ipGenerator ipsCount]];
                 }
             });
         }];
-
+        
         //Adding dependancy on macOperation. For each IP there 2 operations (macOperation and pingOperation). The dependancy makes sure that macOperation will run after pingOperation
         [macOperation addDependency:pingOperation];
         //Adding the operations in the queue
@@ -137,7 +148,14 @@
         [self.queue addOperation:macOperation];
         
     }
+}
 
+-(void)hostPingCompleted
+{
+    NSUInteger remainingIPs = (([self.ipGenerator currentBunch] * [self.ipGenerator bunchSize]) - self.currentHost);
+    if (remainingIPs < [self.ipGenerator bunchSize]) {
+        [self startPingingNextBunch];
+    }
 }
 
 -(void)start {
