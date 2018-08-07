@@ -46,7 +46,11 @@
         
         // IP Binary
         struct in_addr ip_sa;
-        int res = inet_pton(AF_INET, [self.ip cStringUsingEncoding:NSASCIIStringEncoding], &(ip_sa));
+        const char *ip_cstr = [self.ip cStringUsingEncoding:NSASCIIStringEncoding];
+        if (ip_cstr == NULL) {
+            return nil;
+        }
+        int res = inet_pton(AF_INET, ip_cstr, &(ip_sa));
         if (res != 1) {
             return nil;
         }
@@ -54,7 +58,11 @@
         
         // Netmask binary
         struct in_addr nm_sa;
-        res = inet_pton(AF_INET, [self.netmask cStringUsingEncoding:NSASCIIStringEncoding], &(nm_sa));
+        const char *mask_cstr = [self.netmask cStringUsingEncoding:NSASCIIStringEncoding];
+        if (mask_cstr == NULL) {
+            return nil;
+        }
+        res = inet_pton(AF_INET, mask_cstr, &(nm_sa));
         if (res != 1) {
             return nil;
         }
